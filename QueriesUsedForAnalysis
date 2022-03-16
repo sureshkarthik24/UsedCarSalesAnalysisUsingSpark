@@ -1,0 +1,110 @@
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions.{expr, col, column, min, max, avg, desc}
+
+
+val data = spark.read.format("csv").option("header", "true").load("hdfs://10.128.0.8/BigData/cars_data.csv")
+data.show()
+
+data.printSchema()
+
+(1) Write a Spark DataFrames query to create a table called used_cars from data. Use a schema that is appropriate for the column headings 2.
+
+val schema = StructType(Array(
+StructField("car_maker",StringType,true),
+StructField("car_model",StringType,true),
+StructField("car_mileage", IntegerType,true),
+StructField("car_manufac_year", IntegerType,true),
+StructField("eng_displace", IntegerType,true),
+StructField("eng_power", IntegerType,true),
+StructField("body_type",StringType,true),
+StructField("colour",StringType,true),
+StructField("car_stk_year",IntegerType,true),
+StructField("trans_type",StringType,true),
+StructField("door", IntegerType,true),
+StructField("seat", IntegerType,true),
+StructField("fuel",StringType,true),
+StructField("ad_created_date", DateType,true),
+StructField("ad_last_seen",DateType,true),
+StructField("car_price",FloatType,true)))
+
+
+val used_cars = spark.read
+.format ("csv")
+.option("header", "true")
+.schema(schema)
+.load("hdfs://10.128.0.8/BigData/cars_data.csv")
+
+
+(2) Look at the date column of the table used_cars. Why does the date column have all NULL values?
+
+
+(4) 
+
+val totalCount = used_cars.count()
+val makerCount = used_cars.filter(col("car_maker").isNull).count()
+val modelCount = used_cars.filter(col("car_model").isNull).count()
+val mileageCount = used_cars.filter(col("car_mileage").isNull).count()
+val yearCount = used_cars.filter(col("car_manufac_year").isNull).count()
+val engDisplaceCount = used_cars.filter(col("eng_displace").isNull).count()
+val engPowCount = used_cars.filter(col("eng_power").isNull).count()
+val bodyCount = used_cars.filter(col("body_type").isNull).count()
+val colorCount = used_cars.filter(col("colour").isNull).count()
+val stkYearCount = used_cars.filter(col("car_stk_year").isNull).count()
+val transTypeCount = used_cars.filter(col("trans_type").isNull).count()
+val doorCount = used_cars.filter(col("door").isNull).count()
+val seatCount = used_cars.filter(col("seat").isNull).count()
+val fuelCount = used_cars.filter(col("fuel").isNull).count()
+val adCreatedCount = used_cars.filter(col("ad_created_date").isNull).count()
+val adLastSeenCount = used_cars.filter(col("ad_last_seen").isNull).count()
+val priceCount = used_cars.filter(col("car_price").isNull).count()
+
+val percentMaker = (makerCount*100)/totalCount
+val percentModel = (modelCount*100)/totalCount
+val percentMileage = (mileageCount*100)/totalCount
+val percentYear = (yearCount*100)/totalCount
+val percentEngDisplace = (engDisplaceCount*100)/totalCount
+val percentEngPower = (engPowCount*100)/totalCount
+val percentBody = (bodyCount*100)/totalCount
+val percentColor = (colorCount*100)/totalCount
+val percentStkYear = (stkYearCount*100)/totalCount
+val percentTransType = (transTypeCount*100)/totalCount
+val percentDoor = (doorCount*100)/totalCount
+val percentSeat = (seatCount*100)/totalCount
+val percentFuel = (fuelCount*100)/totalCount
+val percentAdcreated = (adCreatedCount*100)/totalCount
+val percentAdLastSeen = (adLastSeenCount*100)/totalCount
+val percentPrice = (priceCount*100)/totalCount
+
+(5)
+
+val unique_price = used_cars.groupBy(col("car_price")).agg(count(col("car_price")).alias("unique_price")).orderBy(col("unique_price").desc) 
+
+(6) val clean_used_cars = used_cars.drop("colour","fuel").filter("(car_manufac_year >= 2000 AND car_manufac_year <= 2017) AND (car_price >=3000 AND car_price <=2000000) AND (car_price!=1295.34) AND (car_maker is not null) AND (car_model is not null)")
+
+(7) clean_used_cars.count()
+
+(8) val car_avg_price = clean_used_cars.groupBy(col("car_maker"),col("car_model")).agg(avg(col("car_price")).alias("average_price")).orderBy(col("average_price").desc).limit(10) 
+
+(9) val car_avg_price_low = clean_used_cars.groupBy(col("car_maker"),col("car_model")).agg(avg(col("car_price")).alias("average_price")).orderBy(col("average_price")).limit(10)
+
+(10) val economic_models = clean_used_cars.filter("car_price >=3000 AND car_price <=20000").groupBy(col("car_maker"),col("car_model")).agg(avg(col("car_price")).alias("average_price")).orderBy(col("average_price").desc).limit(5)
+
+(11) val mid_economic_models = clean_used_cars.filter("car_price >=20000 AND car_price <=300000").groupBy(col("car_maker"),col("car_model")).agg(avg(col("car_price")).alias("average_price")).orderBy(col("average_price").desc).limit(5)
+
+(12) val high_economic_models = clean_used_cars.filter("car_price >=300000 AND car_price <=2000000").groupBy(col("car_maker"),col("car_model")).agg(avg(col("car_price")).alias("average_price")).orderBy(col("average_price").desc).limit(5)
+
+
+Extra_queries
+
+1)val car_manufac_year_val= clean_used_cars.groupBy(col("car_manufac_year")).count()
+
+2) val most_common_car= clean_used_cars.groupBy(col("car_maker"),col("car_model")).count().orderBy(col("count").desc).limit(5)
+
+ 
+high_economic_models
+.coalesce(1)
+.write.option("header", true)
+.csv("hdfs://10.128.0.8/BigData/high_economic_models.csv")
+
+
+hadoop fs -copyToLocal /BigData/high_economic_models.csv /home/karthikqwerty247/BigData/Assign1
